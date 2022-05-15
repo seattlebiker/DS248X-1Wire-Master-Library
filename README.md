@@ -1,3 +1,4 @@
+
 This is a library for interfacing an ESP8266 device (Wemos, NodeMCU, etc.) to a Maxim-Dallas DS2482/4 1-wire master.  It should also work with Arduino's as well, but I
 haven't tested that.
 
@@ -21,7 +22,7 @@ I had to fix the 1-wire search function because it failed to find other than DS1
 
 By running the example code, you should see something like the below.  I have the following on the Microlan (1-wire bus):
 
-1) a singe DS2323 connected to a MetOne raingauge reed switch (over a 25 foot cable). 
+1) a single DS2323 connected to a MetOne raingauge reed switch (over a 25 foot cable). 
 2) a DS2438 Smart Battery monitor
 3) two DS1820 temperature sensors
 
@@ -57,6 +58,6 @@ DS2482-100/800 present
         Found 1-wire counter at { 0x1D, 0xB8, 0x87, 0x01, 0x00, 0x00, 0x00, 0x70 }
         DS2423 returned: 61
 
-Hopefully this library will help others, after hours and hours trying to find code that works for me. This library is posted in an effort to give back to the development community.
+Hopefully this library will help others, after hours and hours trying to find code that works for me. This library is posted in an effort to give back to the Open Source development community.
 
 I welcome comments about the code and improvements; I'm not a software developer by trade (retired sysadmin), and I'm somewhat of a noob using Git, so be kind :-)
