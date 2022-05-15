@@ -27,10 +27,10 @@ By running the example code, you should see something like the below.  I have th
 3) two DS1820 temperature sensors
 
 
-DS248X 1-wire library by SeattleBiker: a Demo
+        DS248X 1-wire library by SeattleBiker: a Demo
 
-Checking for I2C devices...:
-DS2482-100/800 present
+        Checking for I2C devices...:
+        DS2482-100/800 present
         Checking for 1-Wire devices...
         There are devices present on 1-Wire bus
         Searching for { 0x1D, 0xB8, 0x87, 0x01, 0x00, 0x00, 0x00, 0x70 } using OWVerify()
