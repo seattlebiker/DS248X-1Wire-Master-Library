@@ -1,4 +1,4 @@
-## DS2482/DS2484 1-Wire Master Library
+# DS2482/DS2484 1-Wire Master Library
 This is a library for interfacing an ESP8266 device (Wemos, NodeMCU, etc.) to a Maxim-Dallas DS2482/4 1-wire master.  It should also work with Arduino's as well, but I haven't tested that.
 
 I've been using 1-wire devices for years. Some time ago I adapted the Maxim-Dallas 1-Wire API for Java (OWAPI Version 1.10), and created a I2CBridgeAdapter class for the DS2482 1-Wire master based on other adapter classes. Interfacing an ESP8266 SoC with a DS2482 1-wire master in C++ firmware has been a learning (and re-learning) experience.  (BTW, VSCode with the PlatformIO extension rocks!) I've incorporated ideas from these many sources (some acknowledged below) and my J2ME_OneWire libary, for this DS248X 1-wire library. I changed some of the function names where it makes sense, i.e., diferentiating the DS2482 device reset from a 1-wire reset, e.g. OWReset. The library was built using the PlatformIO extension to VSCode.
@@ -14,11 +14,12 @@ CyberGibbons: https://github.com/cybergibbons/DS2482_OneWire
 Also, credit is given to JBechter for DS2423 and DS2438 code:
     https://github.com/jbechter/arduino-onewire-DS2423
     https://github.com/jbechter/arduino-onewire-DS2438
-##Motivation for this Repo
+
+## Motivation for this Repo
 The reason for resurrecting 1-wire code? I was on a quest to find 1-wire code that would find DS2423 counters on the Microlan, since they work great for a remote MetOne Instruments rain gauge. The DS2423 is obsolete unfortunately, but I still have a few, hence the quest.  I ran across Cybergibbons' DS2482 ibrary, which works for finding DS1820 temperature devices, but it's based on Paeae's library which has the same issue as follows:
 
 I had to fix the 1-wire search function because it failed to find other than DS1820 (family ID 0x10) devices on the MicroLan.  If a device with bit 64 in the ROM was a '1' was also on the bus, it didn't see it. I don't take credit for that search fix, but it's in my version. Here's a couple links; User "Garitron" on the Arduino forum found the fix for the 1-wire search detailed in the first link. https://forum.arduino.cc/t/introducing-maxim-ds2482-1-wire-master-library-2/51436 https://forum.arduino.cc/t/introducing-maxim-ds2482-1-wire-master-library/37430?
-# Running the example
+## Running the example
 By running the example code, you should see something like the below.  I have the following on the Microlan (1-wire bus):
 
 1) a single DS2323 connected to a MetOne raingauge reed switch (over a 25 foot cable). 
