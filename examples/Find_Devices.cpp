@@ -1,7 +1,34 @@
 
 /*********************************************************************
- * 
- * Example code
+ * Sample output is below.
+ * DS248X 1-wire library by SeattleBiker: a Demo
+ * DS2482-100/800 present
+ *
+ * Checking for I2C devices...:
+ *       Checking for 1-Wire devices...
+ *      There are devices present on 1-Wire bus
+ *      Searching for { 0x1D, 0xB8, 0x87, 0x01, 0x00, 0x00, 0x00, 0x70 } using OWVerify()
+ *               Found { 0x1D, 0xB8, 0x87, 0x01, 0x00, 0x00, 0x00, 0x70 }
+ *               Found 1-wire counter using OWVerify()
+ *
+ *      Searching for family 10
+ *               Found device { 0x10, 0x61, 0x0E, 0x42, 0x00, 0x08, 0x00, 0x3C } using OWTargetSearch()
+ *
+ *      Searching 1-Wire bus with OWSearch()...
+ *       Found device: { 0x10, 0x61, 0x0E, 0x42, 0x00, 0x08, 0x00, 0x3C }
+ *       Calculated CRC of device serial is 3C
+ *       This device is a 1-wire thermometer
+ *       No temperature error. Temperature = 23.1C or 73.5F
+ *       Found device: { 0x26, 0x26, 0x14, 0x09, 0x00, 0x00, 0x00, 0x95 }
+ *       Calculated CRC of device serial is 95
+ *       This device is a 1-wire thermometer
+ *       This device is a DS2438 ADC/thermometer
+ *       No code here yet
+ *       Found device: { 0x1D, 0xB8, 0x87, 0x01, 0x00, 0x00, 0x00, 0x70 }
+ *       Calculated CRC of device serial is 70
+ *       Found 1-wire counter at { 0x1D, 0xB8, 0x87, 0x01, 0x00, 0x00, 0x00, 0x70 }
+ *       DS2423 returned: 69
+ *
  */
 
 #include <Arduino.h>
@@ -14,22 +41,21 @@ typedef uint8_t DeviceAddress[8];
 #define READ_SCRATCHPAD_COMMAND           0xBE
 #define WRITE_SCRATCHPAD_COMMAND          0x4e
 #define TEMPERATURE_CONVERSION_DELAY      750
-#define DELAY_ADD                         0     // For adjusting the coversion delay, if needed
+#define DELAY_ADD                         0
 
 
 void printAddress(uint8_t[]);
 void printArrayInHex(uint8_t[], int len);
 uint8_t getCRC8( uint8_t *addr, uint8_t len);
 uint16_t getCRC16( uint8_t *data, uint8_t len);
-void readCounter(uint8_t *addr);
+int32 readCounter(uint8_t *addr);
 bool readTemperatureDevice(uint8_t *addr);
 void do_verify();
 void do_family_target(uint8_t familyID);
 
-// This is for testing the OWVerify() function
 uint8_t device_query[] = { 0x1D, 0xB8, 0x87, 0x01, 0x00, 0x00, 0x00, 0x70 };
 
-DeviceAddress currentAddress;   // OWSearch() puts the found serial numbers (ROM ID's) here
+DeviceAddress currentAddress;
 DS248X owMaster;
 
 char buffer[256];
@@ -41,23 +67,31 @@ void setup()
   
   Wire.begin();
 
-  owMaster.DS2482Reset();
-  owMaster.writeConfig(0x01);   // Set active pullup
-  owMaster.selectChannel(0);    // I'm using an 8-channel master (DS2482-800) so selecting
-                                // channel 0
   delay(2000);
   Serial.println();
   Serial.println("DS248X 1-wire library by SeattleBiker: a Demo");
+
+  if (owMaster.isConnected())
+  {
+    Serial.println("DS2482-100/800 present");  
+    owMaster.DS2482Reset();
+    owMaster.writeConfig(0x01);
+    owMaster.selectChannel(0);   
+  }
+  else
+    Serial.println("No DS2482 present");
+  
 }
 
 void loop()
 {        
   uint8_t crc8;
+  uint16_t count;
 
   Serial.println("\nChecking for I2C devices...:");
-  if (owMaster.isConnected())       // Is the DS2482 on the I2C bus?
-  {
-    Serial.println("DS2482-100/800 present");  
+  //if (owMaster.isConnected())
+  //{
+    //Serial.println("DS2482-100/800 present");  
        
     Serial.println("\tChecking for 1-Wire devices...");
     if (owMaster.OWReset())
@@ -73,22 +107,25 @@ void loop()
         Serial.print("\tFound device: ");
         printAddress(currentAddress);
         Serial.println();
-        // Calculate the CRC (if the CRC byte, the 8th, byte is *INCLUDED*
+        // Calculate the CRC (if the CRC byte, the 8th, byte is included
 	      // in the CRC calculation then getCRC8() will return 0)
 	      crc8 = getCRC8(currentAddress, 7);  
 	      Serial.print("\tCalculated CRC of device serial is ");
 	      Serial.println(crc8, HEX);
 
-        // Device family 0x1D is a DS2423 dual-counter memory chip
         if (currentAddress[0] == 0x1D) {
           Serial.print("\tFound 1-wire counter at ");
           printAddress(currentAddress);
           Serial.println("");                    
-          readCounter(currentAddress);                          
+          count = readCounter(currentAddress);
+          //if (CRCerror) {
+    //   Serial.print("Error: ");
+    //   Serial.println(error);
+    //} else {
+        Serial.print("\tDS2423 returned: ");
+        Serial.println(count);     
+    //}                          
         } 
-        // The below tests for a temperature device.  Device family 0x26
-        // is a DS2438 Battery monitor that has temperature measurement
-        // capabilities.
         if (currentAddress[0] == 0x10 || currentAddress[0] == 0x26) {
           Serial.println("\tThis device is a 1-wire thermometer");
           if (!readTemperatureDevice(currentAddress)) {
@@ -98,13 +135,10 @@ void loop()
       }      
       owMaster.OWResetSearch();  
     }
-    
     else
       Serial.println("\n\tNo devices on 1-Wire bus");
  
-  }
-  else
-    Serial.println("No DS2482 present");
+  
 
   delay(5000);
 }
@@ -141,8 +175,8 @@ void do_family_target(uint8_t fam) {
   owMaster.OWResetSearch();      
 }
 
-void readCounter(uint8_t *addr) {
-    uint32_t count = 0;
+int32 readCounter(uint8_t *addr) {
+    uint16_t count = 0;
 
     // Internal buffer
     uint8_t uint8_buffer[45];
@@ -152,7 +186,6 @@ void readCounter(uint8_t *addr) {
     **/
     uint8_t READ_MEMORY_AND_COUNTER_COMMAND = 0xA5;
     
-    int channel = owMaster.selectChannel(0);
     owMaster.OWReset();
     owMaster.OWSelect(addr);
     uint8_buffer [0] = READ_MEMORY_AND_COUNTER_COMMAND;
@@ -168,7 +201,7 @@ void readCounter(uint8_t *addr) {
 
     owMaster.OWReset();
 
-    count = (uint32_t)uint8_buffer[38];
+    count = (uint16_t)uint8_buffer[38];
     for (int j = 37; j >= 35; j--) {
         count = (count << 8) + (uint32_t)uint8_buffer[j];
     }
@@ -178,15 +211,19 @@ void readCounter(uint8_t *addr) {
     uint8_t crcLo = ~uint8_buffer[43];
     uint8_t crcHi = ~uint8_buffer[44];
     
-    int error = 0;
-    error = (crcLo != crcBytes[0]) || (crcHi != crcBytes[1]);
-    if (error) {
-       Serial.print("Error: ");
-       Serial.println(error);
-    } else {
-      Serial.print("\tDS2423 returned: ");
-      Serial.println(count);     
-    }
+    uint16 CRCerror = 0;
+    CRCerror = (crcLo != crcBytes[0]) || (crcHi != crcBytes[1]);
+
+    //CRCerror ? return(CRCerror) : return(count);
+    return(CRCerror ? -1 : count);
+
+    //if (CRCerror) {
+    //   Serial.print("Error: ");
+    //   Serial.println(error);
+    //} else {
+    //  Serial.print("\tDS2423 returned: ");
+    //  Serial.println(count);     
+    //}
 }
     
 

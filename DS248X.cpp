@@ -122,26 +122,6 @@
 uint8_t getCRC8( uint8_t *addr, uint8_t len);
 uint16_t getCRC16( uint8_t *data, uint8_t len);
 
-byte RESET_NOPRESENCE 	= 0x00;	// MicroLan reset result = no presence
-byte RESET_PRESENCE 	= 0x01;	// MicroLan reset result = presence
-byte RESET_ALARM 		= 0x02;	// MicroLan reset result = ALARM presence
-byte RESET_SHORT 		= 0x03;	// MicroLan reset result = Shorted
-
-void printArrayInHex (uint8_t array[], int len)
-{
-  Serial.print("{ ");
-  for (uint8_t i = 0; i < len; i++)
-  {
-    // zero pad the address if necessary
-    Serial.print("0x");
-    if (array[i] < 16) Serial.print("0");
-    Serial.print(array[i], HEX);
-    if ( !(i % 8) ) Serial.print("");
-    if (i < len - 1) Serial.print(", ");    
-  }
-  Serial.print(" }");
-}
-
 // Constructor with no parameters for compatability with DS248X lib
 DS248X::DS248X()
 {
@@ -314,8 +294,9 @@ void DS248X::clearStrongPullup()
 	writeConfig(readConfig() & !DS248X_CONFIG_SPU);
 }
 
+// Credit for this piece of code to Cybergibbons
 // Churn until the busy bit in the status register is clear
-uint8_t DS248X::waitOnBusy()
+uint8_t DS248X::waitOnBusy()// Credit for this piece of code to Cybergibbons
 {
 	uint8_t status;
 
@@ -406,38 +387,6 @@ uint8_t DS248X::OWReset()
 	return (status & DS248X_STATUS_PPD) ? true : false;
 }
 
-
-/**
- * (Original-OWreset)
- * Does a reset of the 1-wire bus via the DS2482 I2C 1-wire bridge
- * @return status byte from DS2482
- * <p>
- *  bit7 bit6 bit5 bit4 bit3 bit2 bit1 bit0
- *  ========================================
- *  DIR  TSB  SBR  RST   LL   SD  PPD  1WB
- * 
- */
-//int OWReset() { 
-//	void I2CwriteByte(uint8_t data);
-//	uint8_t I2CreadByte();
-//
-//    byte reset_cmd = DS2482_1WireResetCmd;
-//    int poll_count = 0;
-//    byte status_reg = 0;
-//    I2CwriteByte(reset_cmd);
-//    do {           
-//        status_reg = I2CreadByte();
-//        poll_count++;
-//    } while (0x01 == (status_reg & DS248X_STATUS_BUSY) && poll_count < POLL_LIMIT);
-//    
-//    if((status_reg & DS248X_STATUS_PPD) == DS248X_STATUS_PPD)  {
-//        return RESET_PRESENCE;
-//    } else if ((status_reg & DS248X_STATUS_SD) == DS248X_STATUS_SD ) {
-//        return RESET_SHORT;
-//    } else {
-//        return RESET_NOPRESENCE;
-//    }
-//}
 
 /*********************************************************************
  * Writes a single data byte to the 1-Wire line.
@@ -545,6 +494,9 @@ void DS248X::OWSelect(uint8_t rom[8])
  * @param ch Channel to be used on the DS2482
  * @returns TRUE if channel selected, FALSE device not detected 
  * or failure to perform select
+ * 
+ * Credit for this piece of code to PaeaeTech
+ * 
  *********************************************************************/
 uint8_t DS248X::selectChannel(byte ch) {
   uint8_t w[] = {0xf0, 0xe1, 0xd2, 0xc3, 0xb4, 0xa5, 0x96, 0x87};
@@ -764,10 +716,7 @@ boolean DS248X::OWVerify(uint8_t *addr)
  	searchLastDeviceFlag = false;
 
  	if (DS248X::OWSearch(found, 1)) 
-	{
- 		Serial.print("\t\tFound ");
-		printArrayInHex(found, 8);
-		Serial.println("");
+	{ 		
 		// check if same device found
  		result = true;
  		for (i = 0; i < 8; i++) 
